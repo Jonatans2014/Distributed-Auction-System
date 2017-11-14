@@ -27,7 +27,7 @@ public class MultiThreadChatClient implements Runnable {
     public static void main(String[] args) {
 
         // The default port.
-        int portNumber = 8566;
+        int portNumber = 8567;
         bidvalue = 1;
         // The default host.
         String host = "localhost";
@@ -63,8 +63,8 @@ public class MultiThreadChatClient implements Runnable {
             while ((responseLine = is.readLine()) != null) {
 
 
-                System.out.println(responseLine);
 
+                System.out.println(responseLine);
                 if (responseLine.contains("bid")) {
 //                    String delims = "[ ]+";
 //                    String[] tokens = responseLine.split(delims);
@@ -81,10 +81,17 @@ public class MultiThreadChatClient implements Runnable {
 //                    }
 //                    System.out.println("Integer " + minvalue);
 //                    System.out.println("this is replace all  " + str);
+
+
+                    System.out.println(responseLine);
                 } else if (responseLine.contains("name")) {
                     System.out.println(responseLine);
 
                     name = responseLine;
+                }
+                else if(responseLine.contains("left"))
+                {
+                    System.out.println(responseLine);
                 }
 
                 if (responseLine.indexOf("*** Bye") != -1)
@@ -113,6 +120,8 @@ public class MultiThreadChatClient implements Runnable {
      * Keep on reading from the socket till we receive "Bye" from the
      * server. Once we received that then we want to break.
      */
+
+
         if (clientSocket != null && os != null && is != null) {
             try {
 
@@ -122,6 +131,7 @@ public class MultiThreadChatClient implements Runnable {
                     System.out.println("Enter something");
                     String input ;
                     input = inputLine.readLine().trim();
+
                    // System.out.println("bidbid"+bidvalue);
 
                     if (input.contains("bid")) {
@@ -129,9 +139,14 @@ public class MultiThreadChatClient implements Runnable {
                         bidvalue = Integer.parseInt(str);
                        //System.out.println("inside biiiidd"+bidvalue);
                     }
+
                     if (bidvalue == 1) {
                         os.println(input);
-                    } else if (bidvalue < minvalue) {
+                    } else if(input.equals("time"))
+                    {
+                        os.println("time");
+                    }
+                    else if (bidvalue <= minvalue) {
                         System.out.println("You have to bid more than " + minvalue);
 
                     } else {

@@ -1,11 +1,13 @@
+import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Timer;
 
 /*
  * The chat client thread. This client thread opens the input and the output
@@ -24,9 +26,11 @@ class clientThread extends Thread {
     private Socket clientSocket = null;
     private final clientThread[] threads;
     private int maxClientsCount;
-    private int maxbid;
-    private int minbid;
 
+    private static int  minbid;
+    private  static  int minutes;
+    private static  long counter;
+    private static  String time;
 
     List<String> Items = new ArrayList<>(Arrays.asList("Car$", "Motorbike"));
 
@@ -34,20 +38,50 @@ class clientThread extends Thread {
         this.clientSocket = clientSocket;
         this.threads = threads;
         maxClientsCount = threads.length;
-        minbid = 50;
-        maxbid = 0;
+
     }
+
 
     public void run() {
         int maxClientsCount = this.maxClientsCount;
         clientThread[] threads = this.threads;
+
+
 
         try {
       /*
        * Create input and output streams for this client.
        */
             // is = new DataInputStream(clientSocket.getInputStream());
-            os = new PrintStream(clientSocket.getOutputStream());
+
+
+//            Timer timer = new Timer();
+//            TimerTask task = new TimerTask() {
+//                @Override
+//                public void run() {
+//
+//                    try {
+//                        minutes++;
+//                        System.out.println("time is " + minutes);
+//                        sleep(3000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            };
+//
+//            timer.scheduleAtFixedRate(task,1000,1000);
+
+
+//
+
+
+
+
+
+
+
+        os = new PrintStream(clientSocket.getOutputStream());
 
             Scanner in = new Scanner(clientSocket.getInputStream());
             String name;
@@ -59,8 +93,17 @@ class clientThread extends Thread {
                 name = in.nextLine();
 
 
-                //Display Items
-                os.println("First Item is " +Items.get(0) + "min bid "+minbid);
+               // check if minbid is 0 or not if not send minbid to other threads
+                if(minbid == 0)
+                {
+                    os.println("First Item is " +Items.get(0) + "min bid "+"50");
+                    minbid = 50;
+                }
+                else
+                {
+                    os.println("First Item is " +Items.get(0) + "min bid "+minbid);
+                }
+
 
 
                 if (name.indexOf('@') == -1) {
@@ -69,6 +112,72 @@ class clientThread extends Thread {
                     os.println("The name should not contain '@' character.");
                 }
             }
+
+
+
+
+
+
+            // set time and broadcast to every client when 60 seconds has passed
+            Timer timer = new Timer();
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    // Task to be executed every second
+                    try {
+                        SwingUtilities.invokeAndWait(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                DateFormat timeFormat = new SimpleDateFormat("ss");
+                                Calendar cali = Calendar.getInstance();
+                                cali.getTime();
+                                long startTime = System.currentTimeMillis();
+                                long elapsedTime = System.currentTimeMillis() - startTime;
+                                long elapsedSeconds = elapsedTime / 1000;
+                                long secondsDisplay = elapsedSeconds % 60;
+                                long elapsedMinutes = elapsedSeconds / 60;
+                                time = timeFormat.format(cali.getTimeInMillis());
+
+
+
+
+                                System.out.println(counter);
+
+                                counter++;
+                                if(counter == 10)
+                                {
+                                    System.out.println("is 60");
+                                    synchronized (this) {
+                                        for (int i = 0; i < maxClientsCount; i++) {
+                                            if (threads[i] != null && threads[i].clientName != null) {
+
+
+                                                threads[i].os.println(counter);
+                                            }
+                                        }
+                                    }
+
+                                    counter =0;
+
+                                }
+
+                            }
+                        });
+                    } catch (InvocationTargetException | InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                }
+            };
+
+// This will invoke the timer every second
+            timer.scheduleAtFixedRate(task, 1000, 1000);
+
+
+
+
 
       /* Welcome the new the client. */
 //            os.println("Welcome " + name
@@ -90,6 +199,7 @@ class clientThread extends Thread {
       /* Start the conversation. */
             while (true) {
                 String line =  in.nextLine();
+
                 if (line.startsWith("/quit")) {
                     break;
                 }
@@ -120,18 +230,48 @@ class clientThread extends Thread {
                             }
                         }
                     }
-                } else {
-          /* The message is public, broadcast it to all other clients. */
-
+                }else if(line.startsWith("bid"))
+                {
+                    String str = line.replaceAll("\\D+", "");
+                    minbid = Integer.parseInt(str);
 
                     synchronized (this) {
                         for (int i = 0; i < maxClientsCount; i++) {
                             if (threads[i] != null && threads[i].clientName != null) {
-                                threads[i].os.println(name + "  bid   "+line);
+
+
+                                threads[i].os.println(name + "  bid   "+minbid + "");
                             }
                         }
                     }
+
+                }else if(line.startsWith("time"))
+                {
+                    synchronized (this) {
+                        for (int i = 0; i < maxClientsCount; i++) {
+                            if (threads[i] != null && threads[i].clientName != null) {
+
+
+                                threads[i].os.println("you have "+time +"left");
+                            }
+                        }
+                    }
+
                 }
+                else {
+          /* The message is public, broadcast it to all other clients. */
+
+
+//                    synchronized (this) {
+//                        for (int i = 0; i < maxClientsCount; i++) {
+//                            if (threads[i] != null && threads[i].clientName != null) {
+//
+//
+//                                threads[i].os.println(name + "  bid   "+time);
+//                            }
+//                        }
+//                    }
+               }
             }
             synchronized (this) {
                 for (int i = 0; i < maxClientsCount; i++) {
@@ -164,4 +304,5 @@ class clientThread extends Thread {
         } catch (IOException e) {
         }
     }
+
 }

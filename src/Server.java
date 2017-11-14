@@ -23,7 +23,7 @@ public class Server {
     public static void main(String args[]) {
 
         // The default port number.
-        int portNumber = 8566;
+        int portNumber = 8567;
         if (args.length < 1) {
             System.out.println("Usage: java MultiThreadChatServerSync <portNumber>\n"
                     + "Now using port number=" + portNumber);
