@@ -30,9 +30,11 @@ class clientThread extends Thread {
     private static int  minbid;
     private  static  int minutes;
     private static  long counter;
+    private static int itemCounter;
     private static  String time;
+    private static String Winner ="noWinner";
 
-    List<String> Items = new ArrayList<>(Arrays.asList("Car$", "Motorbike"));
+    List<String> Items = new ArrayList<>(Arrays.asList("T-shirt","Nike Shoes","Car", "Motorbike"));
 
     public clientThread(Socket clientSocket, clientThread[] threads) {
         this.clientSocket = clientSocket;
@@ -40,14 +42,9 @@ class clientThread extends Thread {
         maxClientsCount = threads.length;
 
     }
-
-
     public void run() {
         int maxClientsCount = this.maxClientsCount;
         clientThread[] threads = this.threads;
-
-
-
         try {
       /*
        * Create input and output streams for this client.
@@ -71,16 +68,7 @@ class clientThread extends Thread {
 //            };
 //
 //            timer.scheduleAtFixedRate(task,1000,1000);
-
-
 //
-
-
-
-
-
-
-
         os = new PrintStream(clientSocket.getOutputStream());
 
             Scanner in = new Scanner(clientSocket.getInputStream());
@@ -91,20 +79,16 @@ class clientThread extends Thread {
                 //ask user to enter name
                 os.println("Enter your name.");
                 name = in.nextLine();
-
-
                // check if minbid is 0 or not if not send minbid to other threads
                 if(minbid == 0)
                 {
-                    os.println("First Item is " +Items.get(0) + "min bid "+"50");
+                    os.println("First Item is " +Items.get(itemCounter) + "min bid "+"50");
                     minbid = 50;
                 }
                 else
                 {
-                    os.println("First Item is " +Items.get(0) + "min bid "+minbid);
+                    os.println("First Item is " +Items.get(itemCounter) + "min bid "+minbid);
                 }
-
-
 
                 if (name.indexOf('@') == -1) {
                     break;
@@ -112,12 +96,6 @@ class clientThread extends Thread {
                     os.println("The name should not contain '@' character.");
                 }
             }
-
-
-
-
-
-
             // set time and broadcast to every client when 60 seconds has passed
             Timer timer = new Timer();
             TimerTask task = new TimerTask() {
@@ -140,28 +118,54 @@ class clientThread extends Thread {
                                 time = timeFormat.format(cali.getTimeInMillis());
 
 
-
-
-                                System.out.println(counter);
+                                System.out.println("this is "+" "+Winner +" and Counter "+counter);
 
                                 counter++;
-                                if(counter == 10)
+
+                                if(counter == 5)
                                 {
-                                    System.out.println("is 60");
+                                    if(Winner.equals("noWinner"))
+                                    {
+                                        synchronized (this) {
+                                            for (int i = 0; i < maxClientsCount; i++) {
+                                                if (threads[i] != null && threads[i].clientName != null) {
+                                                    threads[i].os.println(Winner +" takes the " +" "+  Items.get(itemCounter));
+                                                }
+                                            }
+                                        }
+                                        itemCounter++;
+                                        System.out.println(Items.size());
+                                    }
+                                    if(!Winner.equals("noWinner"))
+                                    {
+                                        System.out.println(Winner);
+                                        synchronized (this) {
+                                            for (int i = 0; i < maxClientsCount; i++) {
+                                                if (threads[i] != null && threads[i].clientName != null) {
+                                                    threads[i].os.println("Highest bid is "+ minbid+"$"+ " "+ Winner+ "takes the " +" "+  Items.get(itemCounter));
+                                                }
+                                            }
+                                        }
+                                        Items.remove(itemCounter);
+                                        itemCounter++;
+                                    }
+                                    if(itemCounter > Items.size()-1)
+                                    {
+                                        itemCounter = 0;
+                                    }
+
                                     synchronized (this) {
                                         for (int i = 0; i < maxClientsCount; i++) {
                                             if (threads[i] != null && threads[i].clientName != null) {
+                                                minbid = 50;
+                                                os.println("Next item is  " +Items.get(itemCounter) + "Minimum  bid " + " is "+ minbid +"$");
 
-
-                                                threads[i].os.println(counter);
                                             }
                                         }
                                     }
-
+                                    Winner ="noWinner";
                                     counter =0;
-
                                 }
-
                             }
                         });
                     } catch (InvocationTargetException | InterruptedException e) {
@@ -174,11 +178,6 @@ class clientThread extends Thread {
 
 // This will invoke the timer every second
             timer.scheduleAtFixedRate(task, 1000, 1000);
-
-
-
-
-
       /* Welcome the new the client. */
 //            os.println("Welcome " + name
 //                    + " to our Auction \nTo leave enter /quit in a new line.");
@@ -241,6 +240,8 @@ class clientThread extends Thread {
 
 
                                 threads[i].os.println(name + "  bid   "+minbid + "");
+                                Winner = name;
+
                             }
                         }
                     }
