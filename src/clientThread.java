@@ -46,6 +46,8 @@ class clientThread extends Thread {
         int maxClientsCount = this.maxClientsCount;
         clientThread[] threads = this.threads;
         try {
+
+
       /*
        * Create input and output streams for this client.
        */
@@ -118,7 +120,7 @@ class clientThread extends Thread {
                                 time = timeFormat.format(cali.getTimeInMillis());
 
 
-                                System.out.println("this is "+" "+Winner +" and Counter "+counter);
+                                //System.out.println("this is "+" "+Winner +" and Counter "+counter);
 
                                 counter++;
 
@@ -126,6 +128,7 @@ class clientThread extends Thread {
                                 {
                                     if(Winner.equals("noWinner"))
                                     {
+
                                         synchronized (this) {
                                             for (int i = 0; i < maxClientsCount; i++) {
                                                 if (threads[i] != null && threads[i].clientName != null) {
@@ -133,13 +136,14 @@ class clientThread extends Thread {
                                                 }
                                             }
                                         }
+
                                         itemCounter++;
                                         System.out.println(Items.size());
                                     }
                                     if(!Winner.equals("noWinner"))
                                     {
                                         System.out.println(Winner);
-                                        synchronized (this) {
+                                        synchronized (this){
                                             for (int i = 0; i < maxClientsCount; i++) {
                                                 if (threads[i] != null && threads[i].clientName != null) {
                                                     threads[i].os.println("Highest bid is "+ minbid+"$"+ " "+ Winner+ "takes the " +" "+  Items.get(itemCounter));
@@ -148,23 +152,44 @@ class clientThread extends Thread {
                                         }
                                         Items.remove(itemCounter);
                                         itemCounter++;
+                                        System.out.println("items being removed " +Items.size());
                                     }
+
+
+                                    if (Items.size() == 0)
+                                    {
+                                        System.out.println("aqui");
+                                        Items.add("Auction closed");
+                                    }
+
+
                                     if(itemCounter > Items.size()-1)
                                     {
                                         itemCounter = 0;
                                     }
 
+
+
                                     synchronized (this) {
                                         for (int i = 0; i < maxClientsCount; i++) {
                                             if (threads[i] != null && threads[i].clientName != null) {
                                                 minbid = 50;
-                                                os.println("Next item is  " +Items.get(itemCounter) + "Minimum  bid " + " is "+ minbid +"$");
+                                                if(!Items.get(0).contains("none"))
+                                                {
+                                                    os.println("Next item is  " +Items.get(itemCounter) + "Minimum  bid " + " is "+ minbid +"$");
+                                                }else
+                                                {
+                                                    os.println(Items.get(itemCounter) );
+                                                }
 
                                             }
                                         }
                                     }
+
                                     Winner ="noWinner";
                                     counter =0;
+
+
                                 }
                             }
                         });
@@ -196,10 +221,16 @@ class clientThread extends Thread {
                 }
             }
       /* Start the conversation. */
+
+
+
             while (true) {
+
                 String line =  in.nextLine();
 
-                if (line.startsWith("/quit")) {
+
+                    System.out.println(Items.size());
+                if (line.startsWith("quit")) {
                     break;
                 }
 
@@ -296,6 +327,8 @@ class clientThread extends Thread {
                     }
                 }
             }
+
+
       /*
        * Close the output stream, close the input stream, close the socket.
        */
@@ -303,6 +336,12 @@ class clientThread extends Thread {
             os.close();
             clientSocket.close();
         } catch (IOException e) {
+
+            Thread.currentThread().interrupt();
+            return;
+
+
+
         }
     }
 

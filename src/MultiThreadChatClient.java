@@ -61,7 +61,7 @@ public class MultiThreadChatClient implements Runnable {
         new Thread(new MultiThreadChatClient()).start();
         try {
             while ((responseLine = is.readLine()) != null) {
-                System.out.println(responseLine);
+
                 if (responseLine.contains("bid")) {
 //                    String delims = "[ ]+";
 //                    String[] tokens = responseLine.split(delims);
@@ -81,6 +81,13 @@ public class MultiThreadChatClient implements Runnable {
 
 
                     System.out.println(responseLine);
+                    if(responseLine.contains("closed"))
+                    {
+                        os.println("/quit");
+                        break;
+                    }
+
+
                 } else if (responseLine.contains("name")) {
                     System.out.println(responseLine);
 
@@ -90,6 +97,7 @@ public class MultiThreadChatClient implements Runnable {
                 {
                     System.out.println(responseLine);
                 }
+
 
                 if (responseLine.indexOf("*** Bye") != -1)
                     break;
